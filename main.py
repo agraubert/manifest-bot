@@ -142,7 +142,72 @@ def init():
                 )
             )
 
+    @bot.add_command('info', Arg('designation', help="Box designation"))
+    async def cmd_info(self, message, designation):
+        async with utils.DBView(boxes={}) as db:
+            if designation not in db['boxes']:
+                return await self.send_message(
+                    message.channel,
+                    "No such box `{}`".format(designation)
+                )
+            return await self.send_message(
+                message.channel,
+                (
+                    "Box `{}`:\n"
+                    "Original Room: {}\n"
+                    "Size: {}\n"
+                    "Contents: {}\n"
+                    "Status: {}"
+                ).format(
+                    designation,
+                    db['boxes'][designation]['room'],
+                    db['boxes'][designation]['size'],
+                    db['boxes'][designation]['manifest'],
+                    db['boxes'][designation]['status']
+                )
+            )
+
     # !list [room] : Lists all boxes or boxes for a specific room
+    @bot.add_command('list', Arg('room', help="Optional: Room ", default=None, nargs='?'))
+    async def cmd_list(self, message, room):
+        async with utils.DBView(boxes={}) as db:
+            if room is None:
+                boxes = db['boxes']
+            else:
+                boxes = {key: val for key, val in db['boxes'].items() if val['room'] == room}
+            if not len(boxes):
+                return await self.send_message(
+                    message.channel,
+                    "No boxes created for this room"
+                )
+            return await self.send_message(
+                message.channel,
+                "{}:\n{}".format(
+                    "Boxes for {}".format(room) if room is not None else "All Boxes",
+                    "\n".join(
+                        "{}: {} {}".format(
+                            key,
+                            val['room'],
+                            val['status']
+                        )
+                        for key,val in boxes.items()
+                    )
+                )
+            )
+
+    @bot.add_command('kill', Arg('designation', help="Box Designation"))
+    async def cmd_kill(self, message, designation):
+        async with utils.DBView(boxes={}) as db:
+            if designation not in db['boxes']:
+                return await self.send_message(
+                    message.channel,
+                    "No such box `{}`".format(designation)
+                )
+            del db['boxes'][designation]
+            await self.send_message(
+                message.channel,
+                "Removed box `{}`".format(designation)
+            )
 
     return bot
 
