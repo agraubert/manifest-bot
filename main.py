@@ -212,4 +212,4 @@ def init():
     return bot
 
 if __name__ == '__main__':
-    init().run('***REMOVED***')
+    init().run(os.environ['MANIFEST_TOKEN'])
